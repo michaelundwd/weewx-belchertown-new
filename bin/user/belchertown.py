@@ -248,21 +248,13 @@ class getData(SearchList):
         # Change the Highcharts decimal to the locale if the option is missing
         # or on auto mode, otherwise use whats defined in Extras
         if highcharts_decimal is None or highcharts_decimal == "auto":
-            try:
-                highcharts_decimal = locale_conv["decimal_point"]
-            except:
-                # Locale not found, default back to a period
-                highcharts_decimal = "."
+            highcharts_decimal = locale_conv.get("decimal_point", ".")
 
         highcharts_thousands = extras_dict.get("highcharts_thousands", None)
         # Change the Highcharts thousands separator to the locale if the option
         # is missing or on auto mode, otherwise use whats defined in Extras
         if highcharts_thousands is None or highcharts_thousands == "auto":
-            try:
-                highcharts_thousands = locale_conv["thousands_sep"]
-            except:
-                # Locale not found, default back to a comma
-                highcharts_thousands = ","
+            highcharts_thousands = locale_conv.get("thousands_sep", ",")
 
         # Get the archive interval for the highcharts gapsize
         try:
@@ -307,10 +299,8 @@ class getData(SearchList):
         # header. If no title defined, use the chart group name
         graphpage_titles = OrderedDict()
         for chartgroup in chart_dict.sections:
-            if "title" in chart_dict[chartgroup]:
-                graphpage_titles[chartgroup] = chart_dict[chartgroup]["title"]
-            else:
-                graphpage_titles[chartgroup] = chartgroup
+            chart_group_config = chart_dict[chartgroup]
+            graphpage_titles[chartgroup] = chart_group_config.get("title", chartgroup)
 
         # Create a dict of chart group page content for use on the graphs page
         # below the header.
@@ -321,27 +311,17 @@ class getData(SearchList):
 
         # Setup the Graphs page button row based on the skin extras option and
         # the button_text from graphs.conf
-        graph_page_buttons = ""
-        graph_page_graphgroup_buttons = []
-        for chartgroup in chart_dict.sections:
-            if (
-                "show_button" in chart_dict[chartgroup]
-                and chart_dict[chartgroup]["show_button"].lower() == "true"
-            ):
-                graph_page_graphgroup_buttons.append(chartgroup)
+        graph_page_graphgroup_buttons = [
+            chartgroup for chartgroup in chart_dict.sections
+            if chart_dict[chartgroup].get("show_button", "").lower() == "true"
+        ]
+        button_parts = []
         for gg in graph_page_graphgroup_buttons:
-            if "button_text" in chart_dict[gg]:
-                button_text = chart_dict[gg]["button_text"]
-            else:
-                button_text = gg
-            graph_page_buttons += (
-                '<a href="./?graph='
-                + gg
-                + '"><button type="button" class="btn btn-primary">'
-                + button_text
-                + "</button></a>"
+            button_text = chart_dict[gg].get("button_text", gg)
+            button_parts.append(
+                f'<a href="./?graph={gg}"><button type="button" class="btn btn-primary">{button_text}</button></a>'
             )
-            graph_page_buttons += " "  # Spacer between the button
+        graph_page_buttons = " ".join(button_parts)
 
         # Set a default radar URL using station's lat/lon
         lat = config_dict["Station"]["latitude"]
@@ -733,7 +713,7 @@ class getData(SearchList):
         )
         at_rainiest_month_name = calendar.month_name[int(at_rainiest_month_query[0])]
         at_rainiest_month = [
-            "%s, %s" % (at_rainiest_month_name, at_rainiest_month_query[1]),
+            f"{at_rainiest_month_name}, {at_rainiest_month_query[1]}",
             locale.format_string("%g", float(at_rainiest_month_converted)),
         ]
 
@@ -881,33 +861,34 @@ class getData(SearchList):
             # final_year = years[-1]
             years = sorted(set(years))[::-1]
 
+            # Build NOAA header HTML using list then join for efficiency
+            noaa_parts = []
             for y in years:
                 # Link to the year file
-                if os.path.exists(noaa_dir + f"NOAA-{y}.txt"):
-                    noaa_header_html += (
-                        f"""<a href="?yr={y}" class="noaa_rep_nav"><b>{y}</b></a>:"""
-                    )
+                year_file = f"{noaa_dir}NOAA-{y}.txt"
+                if os.path.exists(year_file):
+                    noaa_parts.append(f"""<a href="?yr={y}" class="noaa_rep_nav"><b>{y}</b></a>:""")
                 else:
-                    noaa_header_html += (
-                        f"""<span class="noaa_rep_nav"><b>{y}</b></span>:"""
-                    )
+                    noaa_parts.append(f"""<span class="noaa_rep_nav"><b>{y}</b></span>:""")
 
                 # Loop through all 12 months and find if the file exists.  If
                 # the file doesn't exist, just show the month name in the
                 # header without a href link.  There is no month 13, but we
                 # need to loop to 12, so 13 is where it stops.
+                month_links = []
                 for i in range(1, 13):
-                    month_num = format(
-                        i, "02"
-                    )  # Pad the number with a 0 since the NOAA files use 2 digit month
+                    month_num = f"{i:02d}"  # Pad the number with a 0 since the NOAA files use 2 digit month
                     month_abbr = calendar.month_abbr[i]
-                    if os.path.exists(noaa_dir + f"NOAA-{y}-{month_num}.txt"):
-                        noaa_header_html += f""" <a href="?yr={y}&amp;mo={month_num}" class="noaa_rep_nav"><b>{month_abbr}</b></a>"""
+                    month_file = f"{noaa_dir}NOAA-{y}-{month_num}.txt"
+                    if os.path.exists(month_file):
+                        month_links.append(f"""<a href="?yr={y}&amp;mo={month_num}" class="noaa_rep_nav"><b>{month_abbr}</b></a>""")
                     else:
-                        noaa_header_html += f""" <span class="noaa_rep_nav"><b>{month_abbr}</b></span>"""
-
-                # Row build complete, push next row to new line
-                noaa_header_html += "<br>"
+                        month_links.append(f"""<span class="noaa_rep_nav"><b>{month_abbr}</b></span>""")
+                
+                noaa_parts.append(' '.join(month_links))
+                noaa_parts.append('<br>')
+            
+            noaa_header_html = ''.join(noaa_parts)
 
             # Find the current month's NOAA file for the default file to show
             # on JavaScript page load.  The NOAA files are generated as part of
@@ -1991,17 +1972,12 @@ class getData(SearchList):
             facebook_html = ""
 
         if twitter_enabled == "1":
-            twitter_html = """
+            twitter_html = f"""
                 <script>
-                    !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+                    !function(d,s,id){{var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){{js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}}}(document, 'script', 'twitter-wjs');
                 </script>
-                <a href="https://twitter.com/share" class="twitter-share-button" data-url="%s" data-text="%s" data-via="%s" data-hashtags="%s">Tweet</a>
-            """ % (
-                social_share_html,
-                twitter_text,
-                twitter_owner,
-                twitter_hashtags,
-            )
+                <a href="https://twitter.com/share" class="twitter-share-button" data-url="{social_share_html}" data-text="{twitter_text}" data-via="{twitter_owner}" data-hashtags="{twitter_hashtags}">Tweet</a>
+            """
         else:
             twitter_html = ""
 
