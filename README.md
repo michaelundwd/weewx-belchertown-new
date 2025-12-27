@@ -9,6 +9,8 @@ Features include:
 * Extensive graphing system with full customized control on observations, historical timescale, grouping and more. Graphs also update automatically without needing to reload the website.
 * Light and Dark Mode with automatic switching based on sunset and sunrise.
 * Forecast data updated every hour without needing to reload the website. (A free Xweather API key required. You qualify for a free key by submitting weather observations to pwsweather.)
+* Forecast alternative from Pirate Weather has been integrated in v1.7. (Pirate Weather has a limited free subscription option, sign up is
+required to access the service.)
 * Information on your closest earthquake updated automatically.
 * Weather records for the current year, and for all time. 
 * Responsive design. Mobile and iPad landscape ready! Use your mobile phone or iPad in landscape mode as an additional live console display.
@@ -33,3 +35,4 @@ Full documentation on installation, configuration, the skin's extensive features
 * Gary for the initial Highcharts help from skin version 0.1 through to 0.9.1. 
 * Brian at [weather34.com](http://weather34.com) for the weather icons from the simplicty 2015 theme. Used with agreement.
 * Some icons remixed by michaelundwd. Thanks!
+* Addition of Pirate Weather forecast 

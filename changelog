@@ -1,3 +1,14 @@
+1.7 December 27, 2025
+
+Addition of Pirate Weather (https://pirateweather.net/en/latest/) as a (limited free) forecast service option to replace Darksky
+
+New in this version:
+- Back end Pirate Weather API fetch/read logic
+- Front end processing of Pirate Weather forecast data (current conditions/1hr/24hr)
+- Some page formatting logic to display the current conditions icon and format 7 day forecast (forecast descriptions are longer in PW)
+
+**Aeris weather forecasts have not been tested with this version and will require validation.
+
 1.6 November 26, 2025
 
 Minor bug fixes for specific circumstances. Most notable changes are code standardization/modernization. 
