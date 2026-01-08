@@ -14,6 +14,8 @@ import logging
 import os
 import syslog
 import time
+import urllib.request
+import urllib.error
 from collections import OrderedDict
 from math import asin, atan2, cos, degrees, pi, radians, sin, sqrt
 from re import match
@@ -51,6 +53,69 @@ log = logging.getLogger(__name__)
 # Print version in syslog for easier troubleshooting
 VERSION = "1.6"
 log.info(f"version {VERSION}")
+
+
+# -----------------------------------------------------------------------------
+# Pirate Weather (Dark Sky-compatible) helpers
+# Docs: https://api.pirateweather.net/forecast/{apikey}/{lat},{lon}
+# -----------------------------------------------------------------------------
+def _pw_build_url(api_key, lat, lon, units='si', lang='en'):
+    base = "https://api.pirateweather.net/forecast"
+    # You can append &exclude=minutely,flags to reduce payload if desired.
+    return f"{base}/{api_key}/{lat},{lon}?units={units}&lang={lang}&exclude=minutely"
+
+def _http_get_json(url, timeout=15):
+    req = urllib.request.Request(url, headers={"User-Agent": "weewx-belchertown-new/pirateweather"})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode('utf-8'))
+
+def _pw_transform_to_belch(pw):
+    """Map Dark Sky-style JSON from Pirate Weather to the compact structure
+    this skin uses: current, hourly[], daily[], alerts[].
+    """
+    out = {}
+    cur = (pw.get('currently') or {})
+    out['current'] = {
+        'summary': cur.get('summary'),
+        'icon': cur.get('icon'),
+        'temperature': cur.get('temperature'),
+        'apparentTemperature': cur.get('apparentTemperature'),
+        'windSpeed': cur.get('windSpeed'),
+        'windGust': cur.get('windGust'),
+        'windBearing': cur.get('windBearing'),
+        'humidity': cur.get('humidity'),
+        'pressure': cur.get('pressure'),
+        'visibility': cur.get('visibility'),
+        'dewPoint': cur.get('dewPoint'),
+        'precipIntensity': cur.get('precipIntensity'),
+        'precipProbability': cur.get('precipProbability'),
+        'cloudCover': cur.get('cloudCover'),
+        'uvIndex': cur.get('uvIndex'),
+        'time': cur.get('time'),  # epoch seconds
+    }
+    hourly = (pw.get('hourly') or {}).get('data', [])
+    out['hourly'] = [{
+        'time': h.get('time'), 'summary': h.get('summary'), 'icon': h.get('icon'),
+        'temperature': h.get('temperature'), 'apparentTemperature': h.get('apparentTemperature'),
+        'windSpeed': h.get('windSpeed'), 'windGust': h.get('windGust'), 'windBearing': h.get('windBearing'),
+        'precipIntensity': h.get('precipIntensity'), 'precipProbability': h.get('precipProbability'),
+        'cloudCover': h.get('cloudCover'), 'uvIndex': h.get('uvIndex'),
+    } for h in hourly]
+    daily = (pw.get('daily') or {}).get('data', [])
+    out['daily'] = [{
+        'time': d.get('time'), 'summary': d.get('summary'), 'icon': d.get('icon'),
+        'temperatureHigh': d.get('temperatureHigh'), 'temperatureLow': d.get('temperatureLow'),
+        'windSpeed': d.get('windSpeed'), 'windGust': d.get('windGust'), 'windBearing': d.get('windBearing'),
+        'precipIntensity': d.get('precipIntensity'), 'precipProbability': d.get('precipProbability'),
+        'cloudCover': d.get('cloudCover'), 'uvIndex': d.get('uvIndex'),
+    } for d in daily]
+    alerts = pw.get('alerts') or []
+    out['alerts'] = [{'title': a.get('title'), 'expires': a.get('expires'),
+                      'description': a.get('description'), 'severity': a.get('severity'),
+                      'uri': a.get('uri')} for a in alerts]
+    out['provider'] = 'pirateweather'
+    out['generated_at'] = int(time.time())
+    return out
 
 
 class getData(SearchList):
@@ -909,12 +974,96 @@ class getData(SearchList):
         # ==============================================================================
         # Forecast Data
         # ==============================================================================
+
+        # NEW: provider switch (default remains Xweather/Aeris)
+        forecast_provider = extras_dict.get("forecast_provider", "").strip().lower()
+        if forecast_provider not in ("", "pirateweather", "aeris", "xweather"):
+            forecast_provider = ""
+
         # Ensure AQI variables are always defined to avoid NameError when forecast is disabled or fails
         # aqi and aqi_category are global so they can be used by Highcharts
         global aqi, aqi_category
         aqi = "No Data"
         aqi_category = ""
         aqi_location = ""
+
+
+        # ----------------------------
+        # Pirate Weather path
+        # ----------------------------
+        if forecast_provider == "pirateweather" and extras_dict.get("forecast_enabled") == "1":
+            forecast_file = f"{html_root}/json/forecast.json"
+            current_conditions_file = f"{html_root}/json/current_conditions.json"
+
+            # Station/location & options
+            forecast_units = extras_dict["forecast_units"].lower()
+            forecast_lang  = extras_dict["forecast_lang"].lower()
+            latitude  = config_dict["Station"]["latitude"]
+            longitude = config_dict["Station"]["longitude"]
+            forecast_stale_secs           = int(extras_dict["forecast_stale"])
+            current_conditions_stale_secs = int(extras_dict["current_conditions_stale"])
+
+            # Staleness with time.time()
+            forecast_is_stale = True
+            if os.path.isfile(forecast_file):
+                forecast_is_stale = (int(time.time()) - int(os.path.getmtime(forecast_file))) > forecast_stale_secs
+            current_conditions_is_stale = True
+            if os.path.isfile(current_conditions_file):
+                current_conditions_is_stale = (int(time.time()) - int(os.path.getmtime(current_conditions_file))) > current_conditions_stale_secs
+
+            # Fetch → normalize → write forecast
+            if forecast_is_stale:
+                api_key = extras_dict.get("pirateweather_api_key")
+                if not api_key:
+                    raise ValueError("pirateweather_api_key missing in [[[Extras]]]")
+                url = _pw_build_url(api_key, latitude, longitude, units=forecast_units, lang=forecast_lang)
+                try:
+                    pw_raw     = _http_get_json(url)
+                    normalized = _pw_transform_to_belch(pw_raw)
+                    os.makedirs(os.path.dirname(forecast_file), exist_ok=True)
+                    with open(forecast_file, "w", encoding="utf-8") as fh:
+                        json.dump(normalized, fh, ensure_ascii=False, separators=(",", ":"))
+                    syslog.syslog(syslog.LOG_INFO, f"New Pirate Weather forecast cached to {forecast_file}")
+                except urllib.error.HTTPError as e:
+                    syslog.syslog(syslog.LOG_ERR, f"Pirate Weather HTTP error {e.code}: {e.reason}")
+                except Exception as e:
+                    syslog.syslog(syslog.LOG_ERR, f"Pirate Weather update failed: {e}")
+
+            # current_conditions.json (tiny file just with 'current')
+            if current_conditions_is_stale:
+                try:
+                    with open(forecast_file, "r", encoding="utf-8") as rf:
+                        data_cc = json.load(rf)
+                    cc_out = {"timestamp": int(time.time()),
+                              "current": [data_cc.get("current", {})]}
+                    with open(current_conditions_file, "w", encoding="utf-8") as wf:
+                        json.dump(cc_out, wf, ensure_ascii=False, separators=(",", ":"))
+                    syslog.syslog(syslog.LOG_INFO, f"New Pirate Weather current conditions cached to {current_conditions_file}")
+                except Exception as e:
+                    syslog.syslog(syslog.LOG_ERR, f"Pirate Weather current-conditions write failed: {e}")
+
+            # Read current_conditions.json and populate the variables used below
+            with open(current_conditions_file, "r") as read_file:
+                data = json.load(read_file)
+            try:
+                current_conditions_data = data["current"][0]
+                vis_val = current_conditions_data.get("visibility")
+                if forecast_units in ("si", "ca"):
+                    visibility      = locale.format_string("%g", float(vis_val)) if vis_val is not None else "N/A"
+                    visibility_unit = "km"
+                else:
+                    visibility      = locale.format_string("%g", float(vis_val)) if vis_val is not None else "N/A"
+                    visibility_unit = "miles"
+                current_obs_icon    = current_conditions_data.get("icon", "") or ""
+                current_obs_summary = current_conditions_data.get("summary", "") or ""
+                cloud_cover         = f"{current_conditions_data.get('cloudCover', '')}"
+            except Exception as error:
+                current_obs_icon    = ""
+                current_obs_summary = ""
+                visibility          = "N/A"
+                visibility_unit     = ""
+                cloud_cover         = ""
+                syslog.syslog(syslog.LOG_ERR, f"Pirate Weather parse error: {error}")
 
         try:
             if (
@@ -1551,7 +1700,7 @@ class getData(SearchList):
             visibility = "N/A"
             visibility_unit = ""
             cloud_cover = ""
-            log.error(f"Aeris/Xweather error: {error}")
+            syslog.syslog(syslog.LOG_ERR, f"Pirate Weather error: {error}") if forecast_provider == "pirateweather" else log.error(f"Aeris/Xweather error: {error}")
 
         # ==============================================================================
         # Earthquake Data

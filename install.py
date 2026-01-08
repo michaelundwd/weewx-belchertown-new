@@ -108,13 +108,14 @@ extension_config = """
             # reload_images_hook_ac  = -1
 
             #---Forecast defaults---
-            # forecast_enabled        = 0
-            # forecast_provider       = "aeris"
+            # forecast_enabled  = 0
+            # forecast_provider =    #choice between aeris (Aeris/XWeather) or pirateweather (Pirate Weather)
+            
+            #---aeris/Xweather API configuration---
             # forecast_api_id         = ""
             # forecast_api_secret     = ""
             # forecast_units          = "us"
             # forecast_interval_hours = 24
-
             # forecast_lang                     = "en"
             # forecast_stale                    = 3540 # 59 minutes
             # current_conditions_stale          = 3540 # 59 minutes
@@ -124,9 +125,20 @@ extension_config = """
             # forecast_show_daily_forecast_link = 0
             # forecast_daily_forecast_link      = ""
             # forecast_show_humidity_dewpoint   = 0
-            # forecast_place = ""
-            # current_conditions = "obs"
+            # forecast_place                    = ""
+            # current_conditions                = "obs"
             # current_conditions_timestamp_enabled = 0
+            
+            
+            #---Pirate Weather credentials & options---
+            # pirateweather_api_key    = api_key # your Pirate Weather API Key
+            # forecast_units           = us      # supports si, us, ca, uk2 (Dark Sky-style)
+            # forecast_lang            = en      # optional
+            # forecast_place           = ""      # optional override; else station lat/lon
+            # forecast_stale           = 599     # seconds; how often to refresh the cache
+            # current_conditions_stale = 3540    # seconds; 
+            ## (Optional) Write provider tag into JSON for front-end switching:
+            # forecast_write_provider  = 1
 
             #---Air Quality Index (AQI) defaults---
             # aqi_enabled          = 0
