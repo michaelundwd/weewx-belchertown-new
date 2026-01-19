@@ -7,7 +7,7 @@ from io import StringIO
 
 # -------- extension info -----------
 
-VERSION = "1.6"
+VERSION = "1.7beta1-new-belchertown"
 NAME = "Belchertown"
 DESCRIPTION = "A clean modern skin with real time streaming updates and interactive charts. Modeled after BelchertownWeather.com"
 AUTHOR = "Pat OBrien, maintained by uajqq"
@@ -109,38 +109,28 @@ extension_config = """
 
             #---Forecast defaults---
             # forecast_enabled  = 0
-            # forecast_provider =    #choice between aeris (Aeris/XWeather) or pirateweather (Pirate Weather)
+            # forecast_provider = ""   # aeris (Aeris/XWeather) or pirateweather (Pirate Weather)
             
-            #---aeris/Xweather API configuration---
-            # forecast_api_id         = ""
-            # forecast_api_secret     = ""
-            # forecast_units          = "us"
-            # forecast_interval_hours = 24
-            # forecast_lang                     = "en"
-            # forecast_stale                    = 3540 # 59 minutes
-            # current_conditions_stale          = 3540 # 59 minutes
-            # forecast_aeris_use_metar          = 1
-            # forecast_alert_enabled            = 0
-            # forecast_alert_limit              = 1
-            # forecast_show_daily_forecast_link = 0
-            # forecast_daily_forecast_link      = ""
-            # forecast_show_humidity_dewpoint   = 0
-            # forecast_place                    = ""
-            # current_conditions                = "obs"
+            #---forecast API configuration---
+            # forecast_api_id                      = "" # Aeris/XWeather Client ID or Pirate Weather API Key
+            # forecast_api_secret                  = "" # Only for Aeris/XWeather
+            # forecast_units                       = "us"
+            # forecast_interval_hours              = 24
+            # forecast_lang                        = "en"
+            # forecast_stale                       = 3540 # 59 minutes
+            # current_conditions_stale             = 3540 # 59 minutes
+            # forecast_aeris_use_metar             = 1
+            # forecast_alert_enabled               = 0
+            # forecast_alert_limit                 = 1
+            # forecast_show_daily_forecast_link    = 0
+            # forecast_daily_forecast_link         = ""
+            # forecast_show_humidity_dewpoint      = 0
+            # forecast_place                       = "" # defaults to station lat/lon
+            # current_conditions                   = "obs"
             # current_conditions_timestamp_enabled = 0
-            
-            
-            #---Pirate Weather credentials & options---
-            # pirateweather_api_key    = api_key # your Pirate Weather API Key
-            # forecast_units           = us      # supports si, us, ca, uk2 (Dark Sky-style)
-            # forecast_lang            = en      # optional
-            # forecast_place           = ""      # optional override; else station lat/lon
-            # forecast_stale           = 599     # seconds; how often to refresh the cache
-            # current_conditions_stale = 3540    # seconds; 
-            ## (Optional) Write provider tag into JSON for front-end switching:
-            # forecast_write_provider  = 1
+            # forecast_write_provider              = 1 # Write provider tag into JSON for front-end switching
 
-            #---Air Quality Index (AQI) defaults---
+            #---Air Quality Index (AQI) defaults for Aeris/Xweather---
             # aqi_enabled          = 0
             # aqi_location_enabled = 0
 
