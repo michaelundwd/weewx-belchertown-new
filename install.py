@@ -7,7 +7,7 @@ from io import StringIO
 
 # -------- extension info -----------
 
-VERSION = "1.6"
+VERSION = "1.7beta1-new-belchertown"
 NAME = "Belchertown"
 DESCRIPTION = "A clean modern skin with real time streaming updates and interactive charts. Modeled after BelchertownWeather.com"
 AUTHOR = "Pat OBrien, maintained by uajqq"
@@ -108,27 +108,29 @@ extension_config = """
             # reload_images_hook_ac  = -1
 
             #---Forecast defaults---
-            # forecast_enabled        = 0
-            # forecast_provider       = "aeris"
-            # forecast_api_id         = ""
-            # forecast_api_secret     = ""
-            # forecast_units          = "us"
-            # forecast_interval_hours = 24
-
-            # forecast_lang                     = "en"
-            # forecast_stale                    = 3540 # 59 minutes
-            # current_conditions_stale          = 3540 # 59 minutes
-            # forecast_aeris_use_metar          = 1
-            # forecast_alert_enabled            = 0
-            # forecast_alert_limit              = 1
-            # forecast_show_daily_forecast_link = 0
-            # forecast_daily_forecast_link      = ""
-            # forecast_show_humidity_dewpoint   = 0
-            # forecast_place = ""
-            # current_conditions = "obs"
+            # forecast_enabled  = 0
+            # forecast_provider = ""   # aeris (Aeris/XWeather) or pirateweather (Pirate Weather)
+            
+            #---forecast API configuration---
+            # forecast_api_id                      = "" # Aeris/XWeather Client ID or Pirate Weather API Key
+            # forecast_api_secret                  = "" # Only for Aeris/XWeather
+            # forecast_units                       = "us"
+            # forecast_interval_hours              = 24
+            # forecast_lang                        = "en"
+            # forecast_stale                       = 3540 # 59 minutes
+            # current_conditions_stale             = 3540 # 59 minutes
+            # forecast_aeris_use_metar             = 1
+            # forecast_alert_enabled               = 0
+            # forecast_alert_limit                 = 1
+            # forecast_show_daily_forecast_link    = 0
+            # forecast_daily_forecast_link         = ""
+            # forecast_show_humidity_dewpoint      = 0
+            # forecast_place                       = "" # defaults to station lat/lon
+            # current_conditions                   = "obs"
             # current_conditions_timestamp_enabled = 0
+            # forecast_write_provider              = 1 # Write provider tag into JSON for front-end switching
 
-            #---Air Quality Index (AQI) defaults---
+            #---Air Quality Index (AQI) defaults for Aeris/Xweather---
             # aqi_enabled          = 0
             # aqi_location_enabled = 0
 
