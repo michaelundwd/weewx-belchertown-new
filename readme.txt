@@ -2,7 +2,7 @@ This is a fork of the Belchertown skin for the WeeWX weather system.
 Copyright 2018 Pat O'Brien
 Maintained since 2025 by uajqq
 
-Please view the README.md on GitHub for full configuration instructions. https://github.com/poblabs/weewx-belchertown
+Please view the README.md on GitHub for full configuration instructions. https://github.com/uajqq/weewx-belchertown-new
 
 Installation instructions:
 

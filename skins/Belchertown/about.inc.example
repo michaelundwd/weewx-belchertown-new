@@ -2,7 +2,7 @@
 <div class="entry-content about-outer" itemprop="text">
     <br>
     <h2>Welcome to your new about page!</h2>
-    <p>Thank you for installing the <a href="https://github.com/poblabs/weewx-belchertown" target="_blank">Belchertown WeeWX skin</a>!</p>
+    <p>Thank you for installing the <a href="https://github.com/uajqq/weewx-belchertown-new" target="_blank">Belchertown WeeWX skin</a>!</p>
     <p>This is your default about page. To change this text:
     <ul>
         <li>Create a new file at <code>skins/Belchertown/about.inc</code>, or rename the <code>skins/Belchertown/about.inc.example</code> file to <code>about.inc</code></li>
@@ -18,6 +18,6 @@
         <li>WeeWX version: $station.version</li>
         <li>Belchertown Skin Version: $belchertown_version</li>
     </ul>
-    <p>For an example of what this page could say, please see <a href="https://belchertownweather.com/about" target="_blank">https://belchertownweather.com/about</a>. If you need more help, refer to <a href="https://github.com/poblabs/weewx-belchertown#creating-about-page-and-records-page" target="_blank">this link.</a></p>
+    <p>For an example of what this page could say, please see <a href="https://belchertownweather.com/about" target="_blank">https://belchertownweather.com/about</a></p>
     <p>Enjoy your new WeeWX skin!</p>
 </div>
