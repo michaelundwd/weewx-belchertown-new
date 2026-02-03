@@ -1046,6 +1046,7 @@ class getData(SearchList):
         aqi = "No Data"
         aqi_category = ""
         aqi_location = ""
+        aqi_time = ""
 
         # ----------------------------
         # Pirate Weather
@@ -1639,6 +1640,9 @@ class getData(SearchList):
                                 aqi_location = data["aqi"][0]["response"][0]["place"][
                                     "name"
                                 ].title()
+                                aqi_time = data["aqi"][0]["response"][0]["periods"][0][
+                                    "time"
+                                ]
                     except Exception as e:
                         log.error(
                             f"Error getting AQI from Xweather weather. The error was: {e}. Data: {data['aqi']}"
@@ -2246,6 +2250,7 @@ class getData(SearchList):
             "aqi": aqi,
             "aqi_category": aqi_category,
             "aqi_location": aqi_location,
+            "aqi_time": aqi_time,
             "beaufort0": label_dict["beaufort0"],
             "beaufort1": label_dict["beaufort1"],
             "beaufort2": label_dict["beaufort2"],
