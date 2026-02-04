@@ -1091,8 +1091,11 @@ class getData(SearchList):
                 if os.path.isfile(forecast_file):
                     forecast_is_stale = (
                         int(time.time()) - int(os.path.getmtime(forecast_file))
-                    ) > forecast_stale_timer or os.stat(forecast_file).st_size == 0
-
+                    ) > forecast_stale_timer or os.stat(
+                        forecast_file).st_size == 0 or (
+                        int(time.strftime("%M")) < int(config_dict["StdArchive"]["archive_interval"])/60 and
+                        int(time.time()) - int(os.path.getmtime(forecast_file)) > int(config_dict["StdArchive"]["archive_interval"])
+                        )   #belchertown.py is called 12 times per archive, so this last condition ensures forecast on the hour is only downloaded once
                 current_conditions_is_stale = True
                 if os.path.isfile(current_conditions_file):
                     current_conditions_is_stale = (
